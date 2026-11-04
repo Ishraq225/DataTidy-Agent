@@ -1,10 +1,10 @@
-DataTidy Agent
+**DataTidy Agent**
 
 A trustworthy data-cleaning agent for messy CSV files, built around one idea: the gap between a system that works and a system you can trust.
 
 Status: Day 1 of 4 (deterministic core). The profiler, safe operation library, executor and change log are done and tested. The LLM planner, evaluation benchmark and UI come next. See the roadmap.
 
-The idea
+**The idea**
 
 Most "AI data cleaning" demos let a model write and run code on your data, then show it working once. DataTidy takes the opposite approach:
 
@@ -13,9 +13,9 @@ Plan, review, then execute. A cleaning plan is shown to the user as readable ste
 Everything is logged. Every step reports exactly how many cells or rows it changed, and warns when values could not be converted.
 Success is measured, not claimed. Day 3 adds a benchmark with ground truth, including a damage rate: how often the cleaner breaks values that were already correct.
 
-Day 1 builds the part that has to be right regardless of which model is used later: the deterministic core.
+**Day 1 builds the part that has to be right regardless of which model is used later: the deterministic core.**
 
-What works today
+**What works today**
 Component	File	What it does
 Profiler	datatidy/profiler.py	Describes a dataset and flags likely problems (see below)
 Operations	datatidy/operations.py	Six safe cleaning operations, each returning a precise change report
@@ -33,7 +33,8 @@ Mixed date formats	2024-01-05 and 03/04/2024 in one column
 Inconsistent categories	Female, FEMALE, female  in one column
 Stray whitespace	leading, trailing or doubled spaces
 Numeric outliers	values outside 1.5 x IQR (a flag, not a verdict)
-Operations
+
+**Operations**
 Operation	What it does	Safety behaviour
 drop_duplicates	Removes duplicate rows (all columns or a subset)	Reports rows removed
 fill_missing	Fills nulls with mean, median, mode or a constant	Refuses mean/median on non-numeric columns
