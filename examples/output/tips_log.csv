@@ -1,0 +1,8 @@
+step,op,column,status,rows_before,rows_after,cells_changed,message,reason
+1,strip_symbols,total_bill,ok,254,254,254,Converted 'total_bill' to numbers (254 cell(s) changed).,100% of values look numeric but carry a '$' sign
+2,standardize_missing,tip,ok,254,254,22,Replaced 22 hidden-missing token(s) with real missing values.,22 cells use the token 'N/A'
+3,cast_type,tip,ok,254,254,0,Converted 'tip' from str to float64.,numbers stored as text
+4,fill_missing,tip,ok,254,254,22,Filled 22 missing value(s) in 'tip' with median (2.94).,"tips are right-skewed, so median is safer than mean"
+5,normalise_text,sex,ok,254,254,235,Normalised text in 'sex' (235 cell(s) changed).,case and spacing variants of the same category
+6,normalise_text,day,ok,254,254,240,Normalised text in 'day' (240 cell(s) changed).,case and spacing variants of the same category
+7,drop_duplicates,,ok,254,243,0,Removed 11 duplicate row(s).,"11 fully duplicated rows detected by the profiler (run LAST: rows that differ only by case, spacing or symbols become identical after normalising)"

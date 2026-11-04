@@ -1,0 +1,10 @@
+step,op,column,status,rows_before,rows_after,cells_changed,message,reason
+1,normalise_text,species,ok,352,352,330,Normalised text in 'species' (330 cell(s) changed).,case/spacing variants
+2,normalise_text,island,ok,352,352,334,Normalised text in 'island' (334 cell(s) changed).,case/spacing variants
+3,normalise_text,sex,ok,352,352,340,Normalised text in 'sex' (340 cell(s) changed).,consistent casing
+4,fill_missing,sex,ok,352,352,12,Filled 12 missing value(s) in 'sex' with mode ('female').,"categorical column, mode is the only sensible simple fill"
+5,fill_missing,bill_length_mm,ok,352,352,2,Filled 2 missing value(s) in 'bill_length_mm' with median (44.5).,2 missing values
+6,fill_missing,bill_depth_mm,ok,352,352,2,Filled 2 missing value(s) in 'bill_depth_mm' with median (17.3).,2 missing values
+7,fill_missing,flipper_length_mm,ok,352,352,2,Filled 2 missing value(s) in 'flipper_length_mm' with median (197.0).,2 missing values
+8,fill_missing,body_mass_g,ok,352,352,2,Filled 2 missing value(s) in 'body_mass_g' with median (4050.0).,2 missing values
+9,drop_duplicates,,ok,352,344,0,Removed 8 duplicate row(s).,"8 fully duplicated rows (run LAST: rows that differ only by case, spacing or symbols become identical after normalising)"

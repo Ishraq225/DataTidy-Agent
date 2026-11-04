@@ -1,0 +1,8 @@
+pandas>=2.1
+numpy>=1.26
+pytest>=8.0
+# Week 2+
+# pydantic>=2.6
+# langchain>=0.2
+# openai>=1.30
+# streamlit>=1.35

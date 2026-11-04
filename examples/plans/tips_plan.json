@@ -1,0 +1,42 @@
+[
+  {
+    "op": "strip_symbols",
+    "column": "total_bill",
+    "reason": "100% of values look numeric but carry a '$' sign"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "tip",
+    "reason": "22 cells use the token 'N/A'"
+  },
+  {
+    "op": "cast_type",
+    "column": "tip",
+    "params": {
+      "target": "float"
+    },
+    "reason": "numbers stored as text"
+  },
+  {
+    "op": "fill_missing",
+    "column": "tip",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "tips are right-skewed, so median is safer than mean"
+  },
+  {
+    "op": "normalise_text",
+    "column": "sex",
+    "reason": "case and spacing variants of the same category"
+  },
+  {
+    "op": "normalise_text",
+    "column": "day",
+    "reason": "case and spacing variants of the same category"
+  },
+  {
+    "op": "drop_duplicates",
+    "reason": "11 fully duplicated rows detected by the profiler (run LAST: rows that differ only by case, spacing or symbols become identical after normalising)"
+  }
+]
