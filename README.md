@@ -1,162 +1,447 @@
-**DataTidy Agent**
+# DataTidy Agent 🧹
 
-A trustworthy data-cleaning agent for messy CSV files, built around one idea: the gap between a system that works and a system you can trust.
+**A trustworthy data-cleaning agent for messy CSV files.**
 
-Status: Day 1 of 4 (deterministic core). The profiler, safe operation library, executor and change log are done and tested. The LLM planner, evaluation benchmark and UI come next. See the roadmap.
+DataTidy is built around one idea: the gap between a system that works and a system you can trust.
 
-**The idea**
+**Project Status:** Day 1 of 4 | Deterministic Core Completed
 
-Most "AI data cleaning" demos let a model write and run code on your data, then show it working once. DataTidy takes the opposite approach:
+The profiler, safe operation library, executor, CLI, and change log are implemented and tested. The LLM planner, evaluation benchmark, and user interface are planned for the next stages.
 
-The model never runs code. It will only be allowed to choose from a small, fixed library of safe cleaning operations.
-Plan, review, then execute. A cleaning plan is shown to the user as readable steps, each with a reason, before anything changes.
-Everything is logged. Every step reports exactly how many cells or rows it changed, and warns when values could not be converted.
-Success is measured, not claimed. Day 3 adds a benchmark with ground truth, including a damage rate: how often the cleaner breaks values that were already correct.
+See the [Project Roadmap](#roadmap).
 
-**Day 1 builds the part that has to be right regardless of which model is used later: the deterministic core.**
+---
 
-**What works today**
-Component	File	What it does
-Profiler	datatidy/profiler.py	Describes a dataset and flags likely problems (see below)
-Operations	datatidy/operations.py	Six safe cleaning operations, each returning a precise change report
-Executor	datatidy/executor.py	Runs a plan on a copy of the data, logs every step, skips failed steps
-CSV I/O	datatidy/io.py	Loads CSVs without silently hiding N/A-style tokens
-CLI	datatidy/__main__.py	profile and apply commandsF
-What the profiler detects
-Issue	Example
-Duplicate rows	11 fully duplicated rows
-Missing values	12% of age is empty
-Hidden missing tokens	N/A, ?, null, - used instead of empty cells
-Numbers stored as text	"$1,200", "12%", "(500)"
-Dates stored as text	"2024-01-05", "Mar 5, 2024"
-Mixed date formats	2024-01-05 and 03/04/2024 in one column
-Inconsistent categories	Female, FEMALE, female  in one column
-Stray whitespace	leading, trailing or doubled spaces
-Numeric outliers	values outside 1.5 x IQR (a flag, not a verdict)
+## 💡 The Idea
 
-**Operations**
-Operation	What it does	Safety behaviour
-drop_duplicates	Removes duplicate rows (all columns or a subset)	Reports rows removed
-fill_missing	Fills nulls with mean, median, mode or a constant	Refuses mean/median on non-numeric columns
-cast_type	Converts to int, float, str, bool or category	Refuses to truncate 2.7 to 2; counts values that fail to convert
-normalise_text	Trims, collapses spaces, lowercases	Leaves missing values untouched
-strip_symbols	Turns "$1,200", "12%", "(500)" into numbers	1.2k suffixes are opt-in; unparseable values are counted, not hidden
-standardize_missing	Turns N/A, ?, null into real missing values	Custom token list supported
+Most "AI data-cleaning" demos allow a model to write and execute code directly on your data, then demonstrate that it works once.
 
-Design rules that apply to every operation:
+DataTidy takes a different approach.
 
-Operations never modify their input.
-Unknown parameters raise an error instead of being silently ignored, so a misspelled or invented parameter fails loudly.
-Anything that cannot be converted is counted and reported, never dropped quietly.
-Quickstart
+Instead of allowing an LLM to execute arbitrary code, DataTidy will restrict it to selecting operations from a small, predefined library of safe cleaning functions.
 
-Requires Python 3.10+.
+The project follows four core principles:
 
-bash
+- **The model never executes code:** It can only propose a cleaning plan using approved operations.
+- **Plan, review, then execute:** Every cleaning plan is presented as readable steps, each with a reason, before any changes are applied.
+- **Everything is logged:** Each operation reports exactly how many cells or rows it changed and identifies values that could not be converted.
+- **Success is measured, not claimed:** Day 3 introduces a benchmark with ground truth and a damage-rate metric to measure how often the cleaner changes values that were already correct.
+
+**Day 1 focuses on building the part that must remain reliable regardless of which LLM is used later: the deterministic core.**
+
+---
+
+## ⚙️ What Works Today
+
+| Component | File | Description |
+|---|---|---|
+| Profiler | `datatidy/profiler.py` | Profiles datasets and detects potential data quality issues. |
+| Operations | `datatidy/operations.py` | Provides six safe cleaning operations with precise change reports. |
+| Executor | `datatidy/executor.py` | Executes cleaning plans on a copy of the data and logs every step. |
+| CSV I/O | `datatidy/io.py` | Loads and saves CSV files without silently hiding missing-value tokens. |
+| CLI | `datatidy/__main__.py` | Provides `profile` and `apply` commands. |
+
+## 🔍 What the Profiler Detects
+
+The profiler examines a dataset and identifies potential problems before cleaning begins.
+
+| Issue | Example |
+|---|---|
+| Duplicate rows | 11 fully duplicated rows |
+| Missing values | 12% of the age column is empty |
+| Hidden missing tokens | `N/A`, `?`, `null`, `-` |
+| Numbers stored as text | `"$1,200"`, `"12%"`, `"(500)"` |
+| Dates stored as text | `"2024-01-05"`, `"Mar 5, 2024"` |
+| Mixed date formats | `2024-01-05` and `03/04/2024` |
+| Inconsistent categories | `Female`, `FEMALE`, `female` |
+| Stray whitespace | Leading, trailing, or doubled spaces |
+| Numeric outliers | Values outside the 1.5 × IQR range |
+
+**Important:** Outliers are flagged for investigation, not automatically treated as incorrect values.
+
+---
+
+## 🛠️ Safe Cleaning Operations
+
+DataTidy currently provides six cleaning operations.
+
+| Operation | What It Does | Safety Behaviour |
+|---|---|---|
+| `drop_duplicates` | Removes duplicate rows, using all columns or a selected subset. | Reports the number of rows removed. |
+| `fill_missing` | Fills missing values using mean, median, mode, or a constant. | Refuses mean/median on non-numeric columns. |
+| `cast_type` | Converts values to `int`, `float`, `str`, `bool`, or `category`. | Refuses to truncate values such as `2.7` to `2` and counts conversion failures. |
+| `normalise_text` | Trims whitespace, collapses spaces, and normalises letter case. | Leaves missing values untouched. |
+| `strip_symbols` | Converts values such as `"$1,200"`, `"12%"`, and `"(500)"` into numbers. | Optional suffix handling; unparseable values are counted, not silently hidden. |
+| `standardize_missing` | Converts tokens such as `N/A`, `?`, and `null` into actual missing values. | Supports custom missing-value token lists. |
+
+### Design Rules
+
+Every cleaning operation follows these rules:
+
+1. **Non-destructive:** Operations never modify their original input data.
+2. **Strict parameter validation:** Unknown parameters raise errors instead of being silently ignored.
+3. **Transparent conversion:** Values that cannot be converted are counted and reported, never quietly dropped.
+4. **Traceable execution:** Every operation produces a report describing what changed.
+
+---
+
+## 🚀 Quickstart
+
+### Requirements
+
+- Python 3.10+
+- pip
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Ishraq225/DataTidy-Agent.git
+
+cd DataTidy-Agent
+```
+
+### 2. Create a Virtual Environment
+
+**Windows (PowerShell):**
+
+```powershell
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+.venv\Scripts\activate
+```
+
+**Linux / macOS:**
+
+```bash
+python -m venv .venv
+
+source .venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-python scripts/download_datasets.py     # tips, penguins, titanic (public datasets)
-python scripts/make_messy_samples.py    # seeded, reproducible corrupted versions
+### 4. Download Example Datasets
 
-pytest                                  # 36 tests
-1. Profile a messy file
-bash
-python -m datatidy profile data/messy/tips_messy.csv
-text
-Dataset: 254 rows x 7 columns; 11 duplicate rows.
-Columns:
-- total_bill [str, text] missing 0.0%, 229 unique, e.g. ['$16.99', '$10.34', '$21.01']
-- tip [str, text] missing 0.0%, 113 unique, e.g. ['1.01', '1.66', '3.5']
-- sex [str, text] missing 0.0%, 10 unique, e.g. ['Female', 'Male', '  Female ']
-...
-Detected issues:
-- [high] (dataset): duplicate_rows - 11 fully duplicated row(s)
-- [high] total_bill: numbers_stored_as_text - 100% of values look numeric
-- [high] tip: hidden_missing_tokens - 22 cell(s) use tokens like ['N/A']
-- [high] tip: numbers_stored_as_text - 100% of values look numeric
-- [low] sex: whitespace - 30 cell(s) with leading/trailing/double spaces
-- [medium] sex: inconsistent_categories - 2 group(s) differ only by case/spacing
-...
-2. Apply a cleaning plan
+```bash
+python scripts/download_datasets.py
+```
 
-A plan is a JSON list of steps. Each step names an operation, a column, parameters and a reason:
+Downloads three public datasets:
 
-json
-[
-  {"op": "strip_symbols", "column": "total_bill", "reason": "100% of values carry a '$' sign"},
-  {"op": "standardize_missing", "column": "tip", "reason": "22 cells use the token 'N/A'"},
-  {"op": "cast_type", "column": "tip", "params": {"target": "float"}, "reason": "numbers stored as text"},
-  {"op": "fill_missing", "column": "tip", "params": {"strategy": "median"}, "reason": "tips are right-skewed"},
-  {"op": "normalise_text", "column": "sex", "reason": "case and spacing variants"},
-  {"op": "drop_duplicates", "reason": "run last: rows differing only by case or symbols become identical after normalising"}
-]
-bash
-python -m datatidy apply data/messy/tips_messy.csv examples/plans/tips_plan.json \
-    -o cleaned.csv --log change_log.csv
-text
- step                  op     column status  cells_changed                                                       message
-    1       strip_symbols total_bill     ok            254      Converted 'total_bill' to numbers (254 cell(s) changed).
-    2 standardize_missing        tip     ok             22 Replaced 22 hidden-missing token(s) with real missing values.
-    3           cast_type        tip     ok              0                          Converted 'tip' from str to float64.
-    4        fill_missing        tip     ok             22       Filled 22 missing value(s) in 'tip' with median (2.94).
-    5      normalise_text        sex     ok            235               Normalised text in 'sex' (235 cell(s) changed).
-    6      normalise_text        day     ok            240               Normalised text in 'day' (240 cell(s) changed).
-    7     drop_duplicates        NaN     ok              0                          Removed 11 duplicate row(s).
+- Tips
+- Penguins
+- Titanic
 
-Rows: 254 -> 243. Saved cleaned.csv and change_log.csv
+### 5. Generate Messy Samples
 
-A step that fails (unknown operation, bad parameter, missing column) is logged with status: failed and skipped; the rest of the plan still runs and the original data is never modified.
+```bash
+python scripts/make_messy_samples.py
+```
 
-Datasets
+Creates intentionally corrupted versions of the datasets using a fixed random seed for reproducibility.
 
-Three public datasets, downloaded by scripts/download_datasets.py from seaborn-data. They are git-ignored; check each dataset's terms before redistributing any copy.
+### 6. Run Tests
 
-Dataset	Rows	Injected corruptions (seed 42)
-tips	244	$ prefix on bills, N/A in tips, case/space noise, duplicates
-penguins	344	case/space noise, 4 impossible body masses (x10), duplicates
-titanic	891	£ prefix on fares, ? in age, case/space noise, duplicates
-
-Messy versions are reproducible: python scripts/make_messy_samples.py always produces the same files.
-
-Project structure
-text
-datatidy/
-  profiler.py        dataset profile and issue detection
-  operations.py      the six safe operations
-  executor.py        runs a plan and writes the change log
-  io.py              CSV loading/saving
-  __main__.py        command line interface
-tests/               36 tests: operations, profiler, executor, end-to-end
-scripts/             dataset download and messy-sample generator
-examples/plans/      example cleaning plans (one per dataset)
-examples/output/     their cleaned results and change logs
-docs/                dataset notes and the Day 1 log
-Testing
-bash
+```bash
 pytest
+```
 
-The 36 tests cover each operation (including its failure cases), a check that no operation modifies its input, every profiler detector, the executor's log and failure handling, and an end-to-end run on a generated messy dataset that confirms the issues actually disappear.
+**Current result: 36 tests passed.**
 
-What Day 1 taught me
-Order matters. Deduplicating before normalising left 37 duplicates in Titanic, because rows that differ only by case, spacing or currency symbols are not yet identical. Plans should normalise first and deduplicate last. Day 2 enforces this in code, not only in a prompt.
-Silent failure is the enemy. Early operations ignored unknown parameters, hiding typos. They now raise errors. cast_type refuses to turn 2.7 into 2.
-Flagged is not wrong. The profiler marks very high Titanic fares as outliers, but they are real. Outlier treatment has to be a deliberate decision with a reason, never automatic.
-Mean vs median is a real decision. On the tips data, filling 22 missing tips gives 2.94 (median) versus about 3.01 (mean). Small, but it changes 22 cells.
-Known limitations (Day 1)
-There is no LLM yet: plans are written by hand (or by you), not proposed by a model.
-Outliers are detected but not treated.
-Dates are detected but not parsed.
-Exact-duplicate removal can delete legitimately identical records. The Day 3 damage metric is designed to catch this kind of harm.
-Evaluated only by tests and three example datasets so far; there is no benchmark yet.
+---
 
-Roadmap
- Day 1 - profiler, six operations, executor, change log, CLI, 36 tests, three datasets
- Day 2 - plan schema validation, LLM planner (Groq / Gemini / Ollama / OpenAI), retry and fallback, remaining operations
- Day 3 - benchmark with ground truth, baselines, metrics (including damage rate), Streamlit UI
- Day 4 - failure analysis, results, demo video, write-up
- v2 - multi-agent upgrade (profiler / planner / verifier / critic), measured against the v1 benchmark
-License
+## 📊 Using DataTidy
 
-MIT
+### 1. Profile a Messy Dataset
+
+The profiler examines a CSV file and reports its structure, data types, missing values, duplicates, and potential quality issues.
+
+```bash
+python -m datatidy profile data/messy/tips_messy.csv
+```
+
+**Example output:**
+
+```text
+Dataset: 254 rows x 7 columns; 11 duplicate rows.
+
+Columns:
+- total_bill [str, text] missing 0.0%, 229 unique
+- tip [str, text] missing 0.0%, 113 unique
+- sex [str, text] missing 0.0%, 10 unique
+- smoker [str, text] missing 0.0%, 2 unique
+- day [str, text] missing 0.0%, 18 unique
+- time [str, text] missing 0.0%, 2 unique
+- size [int64, numeric] missing 0.0%
+
+Detected issues:
+- [high] duplicate_rows: 11 fully duplicated rows
+- [high] total_bill: numbers stored as text
+- [high] tip: 22 hidden missing tokens
+- [high] tip: numbers stored as text
+- [low] sex: whitespace inconsistencies
+- [medium] sex: inconsistent categories
+- [low] day: whitespace inconsistencies
+- [medium] day: inconsistent categories
+- [medium] size: numeric outliers
+```
+
+The profiler helps identify what needs attention before a cleaning plan is applied.
+
+### 2. Apply a Cleaning Plan
+
+A cleaning plan is a JSON list of steps.
+
+Each step specifies:
+
+- The operation to perform.
+- The target column.
+- Optional parameters.
+- A reason explaining why the operation is needed.
+
+**Example: `tips_plan.json`**
+
+```json
+[
+  {
+    "op": "strip_symbols",
+    "column": "total_bill",
+    "reason": "100% of values contain a currency symbol"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "tip",
+    "reason": "22 cells contain the hidden missing token N/A"
+  },
+  {
+    "op": "cast_type",
+    "column": "tip",
+    "params": {
+      "target": "float"
+    },
+    "reason": "Convert numeric text into floating-point values"
+  },
+  {
+    "op": "fill_missing",
+    "column": "tip",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "Use the median to handle missing tips"
+  },
+  {
+    "op": "normalise_text",
+    "column": "sex",
+    "reason": "Standardise case and whitespace"
+  },
+  {
+    "op": "drop_duplicates",
+    "reason": "Remove duplicates after normalisation"
+  }
+]
+```
+
+### 3. Execute the Cleaning Plan
+
+```bash
+python -m datatidy apply data/messy/tips_messy.csv examples/plans/tips_plan.json -o cleaned.csv --log change_log.csv
+```
+
+**Example execution report:**
+
+| Step | Operation | Column | Cells Changed |
+|---:|---|---|---:|
+| 1 | `strip_symbols` | total_bill | 254 |
+| 2 | `standardize_missing` | tip | 22 |
+| 3 | `cast_type` | tip | 0 |
+| 4 | `fill_missing` | tip | 22 |
+| 5 | `normalise_text` | sex | 235 |
+| 6 | `normalise_text` | day | 240 |
+| 7 | `drop_duplicates` | Dataset | 0 |
+
+```text
+Rows: 254 -> 243
+
+Saved cleaned.csv and change_log.csv
+```
+
+The execution report shows which operations succeeded, how many cells changed, and what happened at each step.
+
+**Failure handling:** If a step contains an unknown operation, invalid parameter, or missing column, it is logged with `status: failed` and skipped. The remaining valid steps can still execute, and the original dataset remains untouched.
+
+---
+
+## 📁 Datasets
+
+DataTidy uses three public datasets downloaded through `scripts/download_datasets.py` from the `seaborn-data` repository.
+
+The original datasets are Git-ignored. Check the original dataset terms before redistributing copies.
+
+| Dataset | Original Rows | Injected Corruptions (Seed 42) |
+|---|---:|---|
+| Tips | 244 | Currency prefixes, `N/A` tokens, case/whitespace noise, duplicates |
+| Penguins | 344 | Case/whitespace noise, four impossible body masses (×10), duplicates |
+| Titanic | 891 | Currency prefixes on fares, `?` in age, case/whitespace noise, duplicates |
+
+The generated messy datasets are reproducible:
+
+```bash
+python scripts/make_messy_samples.py
+```
+
+Using the same fixed seed (`42`) produces the same corrupted samples.
+
+---
+
+## 🏗️ Project Structure
+
+```text
+DataTidy-Agent/
+│
+├── datatidy/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── executor.py
+│   ├── io.py
+│   ├── operations.py
+│   └── profiler.py
+│
+├── data/
+│   └── (downloaded and generated datasets)
+│
+├── docs/
+│   ├── datasets.md
+│   └── week1_log.md
+│
+├── eval/
+│
+├── examples/
+│   ├── plans/
+│   │   ├── tips_plan.json
+│   │   ├── penguins_plan.json
+│   │   └── titanic_plan.json
+│   └── output/
+│
+├── scripts/
+│   ├── download_datasets.py
+│   └── make_messy_samples.py
+│
+├── tests/
+│   ├── test_executor.py
+│   ├── test_operations.py
+│   └── test_profiler.py
+│
+├── .env.example
+├── .gitignore
+├── LICENSE
+├── README.md
+└── requirements.txt
+```
+
+---
+
+## 🧪 Testing
+
+Run the complete test suite:
+
+```bash
+pytest
+```
+
+**Day 1 Test Results: 36 Passed**
+
+The tests cover:
+
+- Every cleaning operation, including failure cases.
+- Verification that operations never modify their original input.
+- All implemented profiler detectors.
+- Executor logging and failure handling.
+- End-to-end execution on generated messy datasets.
+- Verification that detected issues are resolved by the cleaning workflow.
+
+The goal is not simply to demonstrate that the code runs, but to verify that the cleaning operations behave as expected.
+
+---
+
+## 📚 What Day 1 Taught Me
+
+### 1. Order Matters
+
+Deduplicating before normalising text can leave duplicates behind.
+
+For example, `Female`, `female`, and ` FEMALE ` may represent the same category but are not identical strings.
+
+Normalising first and deduplicating last produces better results.
+
+Day 2 will enforce this rule through code rather than relying only on the cleaning plan.
+
+### 2. Silent Failure Is the Enemy
+
+Early versions of the operations ignored unknown parameters.
+
+This could hide mistakes in a cleaning plan.
+
+The operations now raise errors when they encounter unsupported parameters. For example, `cast_type` refuses to convert `2.7` into `2` through silent truncation.
+
+### 3. Flagged Does Not Mean Wrong
+
+The profiler identifies very high Titanic fares as outliers.
+
+However, some of these values are legitimate.
+
+An outlier should be investigated, not automatically deleted or modified.
+
+### 4. Mean vs. Median Is a Real Decision
+
+For the Tips dataset, filling 22 missing tip values gives approximately:
+
+- Median: `2.94`
+- Mean: `3.01`
+
+Both are mathematically valid, but the choice changes 22 values in the dataset.
+
+A cleaning operation should have a reason behind it.
+
+---
+
+## ⚠️ Known Limitations (Day 1)
+
+The current version focuses on the deterministic cleaning core.
+
+Some planned features are not implemented yet:
+
+- **No LLM planner:** Cleaning plans are currently written manually rather than proposed by a language model.
+- **Outlier treatment:** Outliers are detected but not automatically corrected.
+- **Date parsing:** Date formats are detected but not yet parsed or standardised.
+- **Duplicate ambiguity:** Exact-duplicate removal can delete legitimately identical records.
+- **Limited evaluation:** The project has been tested using automated tests and three example datasets, but a ground-truth benchmark is not available yet.
+
+These limitations will be addressed in upcoming development stages.
+
+---
+
+## 🗺️ Roadmap
+
+| Day | Planned Work | Status |
+|---|---|---|
+| Day 1 | Profiler, six operations, executor, change log, CLI, 36 tests, three datasets | ✅ Completed |
+| Day 2 | Plan schema validation, LLM planner (Groq / Gemini / Ollama / OpenAI), retry and fallback, additional operations | 🔜 Planned |
+| Day 3 | Ground-truth benchmark, baseline comparisons, evaluation metrics (including damage rate), Streamlit UI | 🔜 Planned |
+| Day 4 | Failure analysis, final results, demo video, project write-up | 🔜 Planned |
+| V2 | Multi-agent architecture: profiler, planner, verifier, critic; evaluated against the V1 benchmark | 🔮 Future |
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+---
+
+**Built by [Ishraq Sajid](https://github.com/Ishraq225)**
+
+*Building AI systems that are not just capable, but trustworthy.*
