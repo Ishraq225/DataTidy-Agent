@@ -412,7 +412,6 @@ The next major goal is to evaluate cleaning quality using measurable results, in
 - **Version Control:** Git and GitHub
 
 ---
-
 ## 👩‍💻 Author
 
 **Ishraq Sajid**
