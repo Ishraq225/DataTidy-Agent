@@ -1,8 +1,17 @@
 pandas>=2.1
 numpy>=1.26
+<<<<<<< HEAD
+pydantic>=2.6
+openai>=1.30        # used for Groq, OpenAI, Gemini and Ollama (all OpenAI-compatible)
+pytest>=8.0
+# Week 3+
+# streamlit>=1.35
+# matplotlib>=3.8
+=======
 pytest>=8.0
 # Week 2+
 # pydantic>=2.6
 # langchain>=0.2
 # openai>=1.30
 # streamlit>=1.35
+>>>>>>> 1cd048273e899c9cfef0050d522a8bb3c029c006

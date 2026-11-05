@@ -284,6 +284,126 @@ def standardize_missing(df, column=None, tokens=None):
                             message=f"Replaced {total} hidden-missing token(s) with real missing values.")
 
 
+<<<<<<< HEAD
+def parse_dates(df, column=None, format=None, dayfirst=False):
+    """Parse date-like text (mixed formats allowed) into real datetimes.
+
+    Ambiguous dates such as 03/04/2024 follow `dayfirst` (False = month first).
+    Values that cannot be parsed become missing and are counted.
+    """
+    column = _require_column(df, column)
+    s = df[column]
+    if ptypes.is_datetime64_any_dtype(s):
+        return OperationOutcome(df.copy(), message=f"'{column}' is already a datetime column.")
+    cleaned = s.map(lambda v: v.strip() if isinstance(v, str) else v)
+    parsed = pd.to_datetime(cleaned, format=format or "mixed", dayfirst=dayfirst, errors="coerce")
+    failed = int((parsed.isna() & s.notna() & ~s.map(is_missing_token)).sum())
+    out = df.copy()
+    out[column] = parsed
+    msg = (f"Parsed '{column}' as dates (assuming {'day' if dayfirst else 'month'} first "
+           f"for ambiguous values like 03/04/2024).")
+    if failed:
+        msg += f" WARNING: {failed} value(s) could not be parsed and became missing."
+    return OperationOutcome(out, cells_changed=int(parsed.notna().sum()), message=msg,
+                            extra={"newly_missing": failed})
+
+
+def map_values(df, column=None, mapping=None, case_insensitive=False):
+    """Replace category values using an explicit mapping, e.g. {"khi": "Karachi"}.
+
+    Keys are matched after trimming spaces. Values not in the mapping are kept.
+    """
+    column = _require_column(df, column)
+    if not mapping or not isinstance(mapping, dict):
+        raise OperationError("map_values needs a non-empty 'mapping' dictionary.")
+    if len(mapping) > 500:
+        raise OperationError("mapping is too large (max 500 entries).")
+    lookup = {(str(k).strip().lower() if case_insensitive else str(k).strip()): v
+              for k, v in mapping.items()}
+
+    def fix(v):
+        if not isinstance(v, str):
+            return v
+        key = v.strip().lower() if case_insensitive else v.strip()
+        return lookup.get(key, v)
+
+    new = df[column].map(fix)
+    changed = count_changed_cells(df[column], new)
+    out = df.copy()
+    out[column] = new
+    return OperationOutcome(out, cells_changed=changed,
+                            message=f"Mapped {changed} value(s) in '{column}' using {len(lookup)} rule(s).")
+
+
+def clip_outliers(df, column=None, method="iqr", factor=1.5, threshold=3.0, action="clip"):
+    """Handle extreme numeric values. method: iqr | zscore. action: clip | set_missing.
+
+    Use only when values are implausible; a flagged outlier is not necessarily an error.
+    """
+    column = _require_column(df, column)
+    s = df[column]
+    if not ptypes.is_numeric_dtype(s) or ptypes.is_bool_dtype(s):
+        raise OperationError(f"'{column}' is {s.dtype}, not numeric.")
+    if method not in ("iqr", "zscore") or action not in ("clip", "set_missing"):
+        raise OperationError("method must be iqr|zscore and action must be clip|set_missing.")
+    v = s.dropna().astype(float)
+    if v.empty:
+        raise OperationError(f"'{column}' has no values.")
+    if method == "iqr":
+        q1, q3 = v.quantile(0.25), v.quantile(0.75)
+        iqr = q3 - q1
+        low, high = q1 - factor * iqr, q3 + factor * iqr
+    else:
+        mu, sd = v.mean(), v.std(ddof=0)
+        low, high = mu - threshold * sd, mu + threshold * sd
+    if method == "iqr" and iqr == 0 or (method == "zscore" and sd == 0):
+        return OperationOutcome(df.copy(), message=f"'{column}' has no spread; nothing to clip.")
+    outside = (s < low) | (s > high)
+    n = int(outside.sum())
+    out = df.copy()
+    out[column] = s.clip(lower=low, upper=high) if action == "clip" else s.mask(outside, np.nan)
+    verb = "Clipped" if action == "clip" else "Set to missing"
+    return OperationOutcome(out, cells_changed=n,
+                            message=f"{verb} {n} value(s) in '{column}' outside [{low:.4g}, {high:.4g}] ({method}).",
+                            extra={"low": float(low), "high": float(high)})
+
+
+def drop_missing_rows(df, column=None, threshold=0.5):
+    """Drop rows missing a value in `column`, or (no column) rows where at least
+    `threshold` of all cells are missing."""
+    if column is not None:
+        _require_column(df, column)
+        mask = df[column].isna()
+        what = f"missing '{column}'"
+    else:
+        if not 0 < threshold <= 1:
+            raise OperationError("threshold must be in (0, 1].")
+        mask = df.isna().mean(axis=1) >= threshold
+        what = f"at least {threshold:.0%} of cells missing"
+    out = df[~mask].reset_index(drop=True)
+    return OperationOutcome(out, rows_removed=int(mask.sum()),
+                            message=f"Dropped {int(mask.sum())} row(s) with {what}.")
+
+
+def rename_column(df, column=None, new_name=None):
+    """Rename one column."""
+    column = _require_column(df, column)
+    if not isinstance(new_name, str) or not new_name.strip():
+        raise OperationError("rename_column needs a non-empty 'new_name'.")
+    if new_name != column and new_name in df.columns:
+        raise OperationError(f"Column '{new_name}' already exists.")
+    return OperationOutcome(df.rename(columns={column: new_name}),
+                            message=f"Renamed '{column}' to '{new_name}'.")
+
+
+def drop_column(df, column=None):
+    """Remove a column (e.g. one that is mostly missing and unusable)."""
+    column = _require_column(df, column)
+    return OperationOutcome(df.drop(columns=[column]), message=f"Dropped column '{column}'.")
+
+
+=======
+>>>>>>> 1cd048273e899c9cfef0050d522a8bb3c029c006
 OPERATIONS: dict[str, Callable[..., OperationOutcome]] = {
     "drop_duplicates": drop_duplicates,
     "fill_missing": fill_missing,
@@ -291,4 +411,13 @@ OPERATIONS: dict[str, Callable[..., OperationOutcome]] = {
     "normalise_text": normalise_text,
     "strip_symbols": strip_symbols,
     "standardize_missing": standardize_missing,
+<<<<<<< HEAD
+    "parse_dates": parse_dates,
+    "map_values": map_values,
+    "clip_outliers": clip_outliers,
+    "drop_missing_rows": drop_missing_rows,
+    "rename_column": rename_column,
+    "drop_column": drop_column,
+=======
+>>>>>>> 1cd048273e899c9cfef0050d522a8bb3c029c006
 }

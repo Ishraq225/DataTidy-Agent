@@ -1,0 +1,78 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "tip",
+    "params": {},
+    "reason": "22 cells use tokens like 'N/A' (hidden_missing_tokens)"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "total_bill",
+    "params": {
+      "symbols": "$"
+    },
+    "reason": "100% of total_bill values look numeric but are stored as text with '$' symbol"
+  },
+  {
+    "op": "cast_type",
+    "column": "total_bill",
+    "params": {
+      "target": "float"
+    },
+    "reason": "After stripping symbols, total_bill should be numeric"
+  },
+  {
+    "op": "cast_type",
+    "column": "tip",
+    "params": {
+      "target": "float"
+    },
+    "reason": "After standardizing missing tokens, tip values are numeric strings and need float type"
+  },
+  {
+    "op": "normalise_text",
+    "column": "sex",
+    "params": {
+      "lowercase": true,
+      "strip": true,
+      "collapse_spaces": true
+    },
+    "reason": "30 cells have leading/trailing/double spaces and case variations (whitespace, inconsistent_categories)"
+  },
+  {
+    "op": "normalise_text",
+    "column": "day",
+    "params": {
+      "lowercase": true,
+      "strip": true,
+      "collapse_spaces": true
+    },
+    "reason": "31 cells have whitespace and case variations (whitespace, inconsistent_categories)"
+  },
+  {
+    "op": "clip_outliers",
+    "column": "size",
+    "params": {
+      "method": "iqr",
+      "factor": 1.5,
+      "action": "clip"
+    },
+    "reason": "9 values flagged as numeric_outliers beyond 1.5*IQR"
+  },
+  {
+    "op": "fill_missing",
+    "column": "tip",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "22 missing values (~8.7% of rows) after standardization; fill with median"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {
+      "keep": "first"
+    },
+    "reason": "11 fully duplicated rows detected"
+  }
+]

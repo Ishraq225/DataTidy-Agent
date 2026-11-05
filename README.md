@@ -1,3 +1,131 @@
+<<<<<<< HEAD
+# DataTidy Agent
+
+A **trustworthy LLM agent for cleaning messy CSV files**. The LLM proposes a cleaning
+plan; a deterministic executor applies it using a fixed library of safe operations;
+every change is logged. Success is *measured* against ground truth, not just demoed.
+
+> **Status: Week 2 of 4 complete (LLM planner).** The evaluation benchmark and UI come next.
+> See the [roadmap](#roadmap).
+
+## Why
+
+An agent that "works" is not the same as an agent you can trust. DataTidy is built around
+that gap:
+
+- **The LLM never runs code.** It can only choose from a fixed operation library.
+- **Plan, review, then execute.** The user sees and approves the plan.
+- **Every change is logged**, including warnings when values could not be converted.
+- **Measured, not claimed.** Week 3 adds a benchmark with a *damage rate* metric
+  (how often the cleaner breaks values that were already correct).
+
+## Quickstart
+
+```bash
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python scripts/download_datasets.py                    # tips, penguins, titanic
+python scripts/make_messy_samples.py                   # seeded corrupted versions
+
+python -m datatidy profile data/messy/tips_messy.csv   # what is wrong with this file?
+python -m datatidy apply data/messy/tips_messy.csv examples/plans/tips_plan.json \
+       -o cleaned.csv --log change_log.csv             # apply a cleaning plan
+pytest                                                 # 81 tests
+```
+
+### Using the LLM planner
+
+Pick one provider and put its key in a `.env` file (copy `.env.example`; never commit `.env`):
+
+| Provider | Cost | Setup |
+|---|---|---|
+| `groq` | Free tier (rate limited) | key from console.groq.com |
+| `gemini` | Free tier (rate limited) | key from aistudio.google.com |
+| `ollama` | Free, runs locally | install Ollama, then `ollama pull llama3.2` |
+| `openai` | Paid (prepaid credits) | key from platform.openai.com |
+
+```bash
+python -m datatidy plan  data/messy/tips_messy.csv --provider groq     # just show/save the plan
+python -m datatidy clean data/messy/tips_messy.csv --provider groq     # plan, ask approval, clean
+python -m datatidy clean data/messy/tips_messy.csv --provider ollama --model llama3.2 --yes
+```
+
+Free-tier limits and model names change often; check the provider's console and override the
+model with `--model` or `DATATIDY_MODEL` if the default is unavailable.
+
+**Privacy:** the LLM receives a profile summary (column stats and a few sample values), not the
+whole file. Do not use sensitive data with cloud providers; use Ollama for that.
+
+## What exists so far
+
+| Module | Purpose |
+|---|---|
+| `datatidy/profiler.py` | Describes a dataset and flags issues: duplicates, missing values, hidden missing tokens (`N/A`, `?`), numbers/dates stored as text, mixed date formats, inconsistent categories, whitespace, outliers |
+| `datatidy/operations.py` | Safe operation library (below) |
+| `datatidy/executor.py` | Runs a plan on a *copy* of the data, logs each step, skips failed steps |
+| `datatidy/schema.py` | Pydantic validation of LLM plans: operations, parameters, column names (tracks renames/drops) |
+| `datatidy/llm.py` | One backend class for Groq / OpenAI / Gemini / Ollama, plus a fake backend for tests |
+| `datatidy/planner.py` | Prompt, JSON extraction, validate, one retry with error feedback, rule-based fallback |
+| `datatidy/pipeline.py` | Profile, plan, approval hook, execute, before/after report |
+| `datatidy/__main__.py` | CLI: `profile`, `plan`, `clean`, `apply` |
+
+### Operations (12, frozen)
+
+| Operation | What it does |
+|---|---|
+| `drop_duplicates` | Remove duplicate rows (all columns or a subset) |
+| `fill_missing` | Fill nulls with mean / median / mode / constant |
+| `cast_type` | Convert to int / float / str / bool / category; refuses to truncate 2.7 to 2 |
+| `normalise_text` | Trim, collapse spaces, lowercase |
+| `strip_symbols` | `"$1,200"`, `"12%"`, `"(500)"` to numbers; `1.2k` suffixes are opt-in |
+| `standardize_missing` | Turn hidden tokens like `N/A` and `?` into real missing values |
+| `parse_dates` | Mixed-format date text to real dates; ambiguous `03/04/2024` follows `dayfirst` |
+| `map_values` | Merge category spellings with an explicit mapping |
+| `clip_outliers` | IQR or z-score; clip or set to missing |
+| `drop_missing_rows` | Drop rows missing one column, or mostly empty rows |
+| `rename_column` / `drop_column` | Rename or remove a column |
+
+Design rules: operations never modify their input; unknown parameters raise an error
+instead of being ignored; values that cannot be converted are counted and reported.
+
+### Plan format
+
+```json
+[
+  {"op": "strip_symbols", "column": "total_bill", "reason": "100% of values carry a '$' sign"},
+  {"op": "fill_missing", "column": "tip", "params": {"strategy": "median"}, "reason": "right-skewed"}
+]
+```
+
+## Roadmap
+
+- [x] **Week 1** - profiler, 6 operations, executor, change log, CLI, tests, 3 datasets
+- [x] **Week 2** - Pydantic plan schema, LLM planner (Groq / Gemini / Ollama / OpenAI), validation + retry + fallback, 12 operations
+- [ ] **Week 3** - corruption generator with ground truth, baselines, metrics, Streamlit UI
+- [ ] **Week 4** - failure analysis, results, demo video, write-up
+- [ ] **v2** - multi-agent upgrade (profiler / planner / verifier / critic), measured against the v1 benchmark
+
+## Safety design
+
+1. The LLM chooses from a fixed operation list and never writes code.
+2. Its output is untrusted: structure, operation, parameters and column names are validated.
+3. Invalid plans get **one retry** with the exact errors; after that a deterministic rule-based plan is used.
+4. `drop_duplicates` is always moved to the end, because rows only become identical after normalising.
+5. The user sees every step and its reason, and can reject the plan before anything runs.
+
+## Known limitations
+
+- Outlier *detection* exists, but there is no outlier *treatment* yet. Flagged outliers are often
+  legitimate (e.g. a very high ticket fare), so the planner must not clip blindly.
+- Exact-duplicate removal can delete legitimate identical records; this is a case the Week 3
+  damage metric is designed to catch.
+- Ambiguous dates (`03/04/2024`) are parsed month-first unless `dayfirst` is set; the log states the assumption.
+- The LLM planner has been verified against a mock server and a fake backend, and still needs a measured evaluation (Week 3).
+
+## License
+
+MIT
+=======
 # DataTidy Agent 🧹
 
 **A trustworthy data-cleaning agent for messy CSV files.**
@@ -445,3 +573,4 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 **Built by [Ishraq Sajid](https://github.com/Ishraq225)**
 
 *Building AI systems that are not just capable, but trustworthy.*
+>>>>>>> 1cd048273e899c9cfef0050d522a8bb3c029c006
