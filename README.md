@@ -1,173 +1,465 @@
 # DataTidy Agent
 
-A **trustworthy LLM agent for cleaning messy CSV files**. The model proposes a cleaning plan, you review it,
-and a deterministic executor applies it with a fixed library of safe operations and logs every change.
-Success is **measured against ground truth**, not just demoed.
+### A Trustworthy AI-Powered CSV Data Cleaning Agent
 
-> **Status: Week 3 of 4 complete.** Deterministic core (Week 1), LLM planner (Week 2), benchmark and web UI
-> (Week 3). Remaining: real LLM results and the write-up. See the [roadmap](#roadmap).
+DataTidy Agent is an intelligent data-cleaning system designed to transform messy CSV datasets into clean, structured, and reliable data.
 
-## Why
+Unlike conventional AI agents that directly execute generated code, DataTidy follows a **Plan → Review → Execute** architecture. An LLM proposes a cleaning plan, the user reviews and approves it, and a deterministic execution engine applies changes using a fixed library of 12 safe operations.
 
-An agent that "works" is not the same as an agent you can trust. DataTidy is built around that gap:
+Every modification is validated, tracked, and recorded in a detailed change log.
 
-- **The LLM never runs code.** It can only choose from 12 safe operations.
-- **Its output is untrusted.** Plans are validated (operations, parameters, column names), retried once with the
-  exact errors, and replaced by a rule-based fallback if still invalid.
-- **Plan, review, execute.** You see every step and its reason, and can untick or edit steps first.
-- **Everything is logged**, including warnings when values could not be converted.
-- **Measured, not claimed.** A benchmark with ground truth reports fix rates *and* damage.
+**Core Philosophy: The model never executes code. It only proposes actions.**
 
-## Quickstart
+---
+
+## Table of Contents
+
+1. [Features](#features)
+2. [System Architecture](#system-architecture)
+3. [How It Works](#how-it-works)
+4. [Supported Cleaning Operations](#supported-cleaning-operations)
+5. [Technology Stack](#technology-stack)
+6. [Installation](#installation)
+7. [Usage](#usage)
+8. [LLM Provider Configuration](#llm-provider-configuration)
+9. [Web Interface](#web-interface)
+10. [Evaluation and Benchmark](#evaluation-and-benchmark)
+11. [Benchmark Results](#benchmark-results)
+12. [Project Structure](#project-structure)
+13. [Limitations](#limitations)
+14. [Future Improvements](#future-improvements)
+15. [License](#license)
+
+---
+
+## Features
+
+- **AI-Powered Cleaning Plans:** Uses LLMs to analyze dataset profiles and suggest appropriate cleaning operations.
+- **Safety-First Architecture:** The model cannot execute arbitrary code. It can only select from 12 predefined operations.
+- **Human-in-the-Loop:** Review, edit, approve, or reject cleaning steps before execution.
+- **Deterministic Execution:** Executes validated operations on a copy of the original dataset.
+- **Automatic Issue Detection:** Identifies missing values, duplicates, inconsistent categories, formatting issues, and potential outliers.
+- **Validation and Fallback:** Invalid LLM-generated plans are retried once before switching to a deterministic rule-based plan.
+- **Detailed Change Logs:** Tracks modified cells, removed rows, failed conversions, and execution results.
+- **Multiple LLM Providers:** Supports Groq, Gemini, Ollama, and OpenAI.
+- **Interactive Web Interface:** Built with Streamlit for uploading, reviewing, cleaning, and downloading datasets.
+- **Ground-Truth Evaluation:** Measures cleaning accuracy, recovery rates, and unintended data damage.
+
+---
+
+## System Architecture
+
+DataTidy follows a structured pipeline that separates AI reasoning from actual data execution.
+
+```text
+              Messy CSV Dataset
+                      |
+                      v
+               Dataset Profiler
+              (Rule-Based Analysis)
+                      |
+                      v
+                 LLM Planner
+             (Cleaning Suggestions)
+                      |
+                      v
+               Plan Validation
+                      |
+               +------+------+
+               |             |
+               v             v
+           Valid Plan    Invalid Plan
+               |          Retry Once
+               |             |
+               |       Rule-Based Fallback
+               +------+------+
+                      |
+                      v
+                Human Review
+               (Edit / Approve)
+                      |
+                      v
+            Deterministic Executor
+                      |
+               +------+------+
+               |             |
+               v             v
+           Cleaned CSV   Change Log
+```
+
+## How It Works
+
+1. **Profiling:** Analyzes the dataset without using an LLM and detects potential data-quality issues.
+2. **Planning:** Sends the dataset profile to an LLM, which generates a structured JSON cleaning plan.
+3. **Validation:** Validates operation names, parameters, and column references using Pydantic.
+4. **Retry and Fallback:** Retries an invalid plan once, then uses a rule-based fallback if necessary.
+5. **Human Review:** Allows users to inspect, modify, or reject proposed cleaning steps.
+6. **Execution:** Applies approved operations deterministically on a copy of the dataset.
+7. **Reporting:** Produces the cleaned CSV, execution report, and detailed change log.
+
+---
+
+## Supported Cleaning Operations
+
+DataTidy provides 12 predefined operations:
+
+| Operation | Description |
+|---|---|
+| `standardize_missing` | Converts tokens such as `N/A`, `?`, and `null` into missing values. |
+| `strip_symbols` | Removes currency symbols, percentages, and numeric formatting. |
+| `parse_dates` | Parses mixed-format date strings. |
+| `cast_type` | Converts columns into specified data types. |
+| `normalise_text` | Trims whitespace, collapses spaces, and normalizes text case. |
+| `map_values` | Standardizes inconsistent categorical values. |
+| `rename_column` | Renames dataset columns safely. |
+| `drop_duplicates` | Removes duplicate records. |
+| `fill_missing` | Handles missing values using mean, median, mode, or constants. |
+| `clip_outliers` | Handles outliers using IQR or Z-score methods. |
+| `drop_missing_rows` | Removes rows with missing values according to selected rules. |
+| `drop_column` | Removes unnecessary or unusable columns. |
+
+### Safety Guarantees
+
+- Original input data is never modified.
+- Unknown parameters raise validation errors.
+- Failed conversions are counted and reported.
+- Every execution step is recorded.
+
+---
+
+## Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Programming Language | Python |
+| Data Processing | Pandas, NumPy |
+| AI Integration | Groq, Gemini, OpenAI, Ollama |
+| Data Validation | Pydantic |
+| Web Interface | Streamlit |
+| Testing | Pytest |
+| Data Visualization | Matplotlib |
+| Version Control | Git and GitHub |
+
+---
+
+## Installation
+
+### 1. Clone the Repository
 
 ```bash
-python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python scripts/download_datasets.py && python scripts/make_messy_samples.py
-pytest                                                    # 113 tests, no API key needed
-
-streamlit run app.py                                      # web UI
-python -m datatidy profile data/messy/tips_messy.csv      # CLI: what is wrong with this file?
-python -m datatidy clean   data/messy/tips_messy.csv --provider groq
+git clone https://github.com/Ishraq225/DataTidy-Agent.git
+cd DataTidy-Agent
 ```
 
-Providers (put a key in `.env`, copied from `.env.example`; never commit it):
+### 2. Create a Virtual Environment
 
-| Provider | Cost | Setup |
-|---|---|---|
-| `groq` | Free tier (rate limited) | key from console.groq.com |
-| `gemini` | Free tier (rate limited) | key from aistudio.google.com |
-| `ollama` | Free, local | install Ollama, `ollama pull llama3.2` |
-| `openai` | Paid | key from platform.openai.com |
-| *Rule-based* | Free, no key | UI option / `eval` baseline |
+**Windows:**
 
-Free-tier limits and model names change; override with `--model` or `DATATIDY_MODEL`.
-**Privacy:** the LLM receives a profile summary (stats and a few sample values), not the file.
-
-## Web UI
-
-`streamlit run app.py`: upload a CSV (or pick a sample), see the detected issues, click **Propose cleaning plan**,
-then untick steps or edit their JSON parameters in the table, and **Run cleaning**. You get before/after metrics,
-the cleaned data, a change log, remaining issues, and downloads for the CSV, log and plan.
-
-## How it works
-
-```
-CSV -> profile (no LLM) -> planner (LLM) -> validate -> [retry once] -> [rule-based fallback]
-    -> user review -> deterministic executor -> cleaned CSV + change log
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
 ```
 
-| Module | Purpose |
-|---|---|
-| `datatidy/profiler.py` | Detects duplicates, missing values, hidden tokens (`N/A`, `?`), numbers/dates stored as text, mixed date formats, inconsistent categories, whitespace, outliers |
-| `datatidy/operations.py` | 12 safe operations; never modify input; unknown parameters rejected; row removal keeps original index |
-| `datatidy/schema.py` | Pydantic validation of plans, column tracking through renames/drops |
-| `datatidy/llm.py` | One backend for Groq / OpenAI / Gemini / Ollama, with token and latency tracking |
-| `datatidy/planner.py` | Prompt, JSON extraction, validation, retry, fallback |
-| `datatidy/executor.py` | Runs a plan on a copy; a failing step is logged and skipped |
-| `eval/` | Benchmark: corruption generator, baselines, metrics, runner, report |
-| `app.py` | Streamlit UI |
-
-Operations: `standardize_missing`, `strip_symbols`, `parse_dates`, `cast_type`, `normalise_text`, `map_values`,
-`rename_column`, `drop_duplicates`, `fill_missing`, `clip_outliers`, `drop_missing_rows`, `drop_column`.
-
-## Evaluation
-
-### Benchmark design
-
-10 public datasets (tips, penguins, titanic, mpg, planets, healthexp, exercise, diamonds, dowjones, seaice), each
-corrupted with 3 seeds = **30 cases**. The clean table is the ground truth. Natural duplicates are removed first, because
-they are indistinguishable from injected ones. Corruptions are recorded, so every injected cell is known.
-
-| Corruption | Kind | Example |
-|---|---|---|
-| Numbers as text | recoverable | `$1,234.5`, `12.5%` |
-| Mixed date formats | recoverable | `2024-03-05`, `05 Mar 2024`, `03/05/2024` |
-| Case / spacing noise | recoverable | `FEMALE`, `  female ` |
-| Duplicate rows | recoverable | the same record entered again, **corrupted independently** (near-duplicates) |
-| Hidden missing tokens | lossy | `N/A`, `?`, `-` replace real values |
-| Outliers | lossy | value x 10 |
-
-### Systems compared
-
-| System | Description |
-|---|---|
-| Do nothing | the messy file as-is |
-| Rule-based | plan from profiler flags only, no LLM |
-| Single prompt | one minimal LLM call: same operations and profile, but no rules, validation, retry, fallback or ordering fix |
-| **DataTidy agent** | rules prompt + validation + retry + fallback + dedupe-placement safeguard |
-
-"Single prompt" vs "agent" isolates what the scaffolding around the model is worth.
-
-### Metrics
-
-| Metric | Meaning |
-|---|---|
-| Cell accuracy | correct cells / all cells of the clean table (lost rows or columns count as wrong) |
-| **Damage rate** | cells that were correct before cleaning and are wrong after |
-| Fix rate per type | exact value restored (numbers, dates), consistent with siblings (case), token gone (hidden missing), error at least halved (outliers) |
-| Duplicates removed | share of injected duplicate rows removed |
-| Rows / columns lost | original rows or columns that no longer exist |
-| Missing cells filled | cells whose true value is missing but now hold a value (imputation) |
-| Valid first try, fallback rate, tokens, latency | reliability and cost of the LLM systems |
-
-### Results so far (no LLM yet)
-
-30 cases. The LLM columns are filled in by running the benchmark with a key (below).
-
-| System | Cell accuracy | Recoverable fixed | Duplicates removed | Damage | Rows lost | Missing cells filled |
-|---|---|---|---|---|---|---|
-| Do nothing | 53.4% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% |
-| Rule-based | 97.8% | 100.0% | 77.2% | 0.0% | 0.0% | 24.9% |
-| Single prompt | _run_ | | | | | |
-| DataTidy agent | _run_ | | | | | |
-
-**Read this honestly:** the rule-based baseline scores so high because every corruption I inject is something my profiler
-is built to detect. It is a *ceiling-ish baseline for this benchmark*, not a claim that rules solve data cleaning.
-It leaves outliers untouched (0%, a deliberate choice) and imputes 24.9% of genuinely missing cells. 77% duplicate removal
-is the limit of exact matching: a duplicate pair that differs in a lossy cell (one copy has `N/A`) cannot be matched.
-
-### Run the benchmark
+**Linux / macOS:**
 
 ```bash
-python -m eval.run_eval --systems noop,rules                         # no key needed (about 10 s)
-python -m eval.run_eval --systems noop,rules,single,agent --provider groq --seeds 0 --sleep 20
-python -m eval.run_eval --systems noop,rules,single,agent --provider groq --seeds 1 2 --sleep 20 --resume
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-Results go to `eval/results/`: `runs.csv` (one row per run), `summary.md`, `worst_cases.md`, three charts, and
-`plans/` (the plan every system produced, for failure analysis). Free tiers have per-minute and per-day token limits,
-so start with one seed and use `--resume` to continue the next day.
+### 3. Install Dependencies
 
-## What the benchmark found (before any LLM ran)
+```bash
+python -m pip install -r requirements.txt
+```
 
-1. **Dedupe order matters, and my first rule was wrong.** Week 1: deduplicating before normalising leaves near-duplicates.
-   Week 3: deduplicating *after filling* deleted real rows, because filling two different rows with the same median made them
-   identical. The enforced rule is **normalise, then dedupe, then fill**.
-2. **The benchmark caught a bug in my own profiler.** `"30 min"` was classified as "numbers stored as text"; the cleaner turned every
-   value into a missing value and filled the median (damage 24%). Unit suffixes are no longer flagged. A regression test pins it.
-3. **My first metric could be fooled by float noise** (`59.400000000000006` vs `59.4`): an untouched outlier looked "improved".
-   Outliers now need at least half the error removed.
-4. **Exact duplicates were too easy.** Copying an already-corrupted row made dedupe-first look fine. Real duplicates are the same
-   record entered differently, so each copy is now corrupted independently.
+### 4. Download Sample Datasets
 
-## Known limitations
+```bash
+python scripts/download_datasets.py
+```
 
-- LLM results are not in yet; the LLM code paths are tested with scripted fake models and a mock HTTP server.
-- Only exact duplicate matching; near-duplicate (fuzzy) matching is future work.
-- The corruption types overlap with what the profiler detects, so the rule-based baseline is optimistic.
-- Ten datasets, three seeds; averages hide per-dataset variation (see `runs.csv`).
-- Text is compared case-insensitively in the accuracy grid, so lowercasing categories is not punished.
-- Only CSV files, up to a few hundred thousand rows.
+### 5. Generate Messy Sample Datasets
 
-## Roadmap
+```bash
+python scripts/make_messy_samples.py
+```
 
-- [x] **Week 1** - profiler, operations, executor, change log, CLI
-- [x] **Week 2** - plan schema, LLM planner (Groq / Gemini / Ollama / OpenAI), validation, retry, fallback
-- [x] **Week 3** - benchmark with ground truth, baselines, metrics, report, Streamlit UI
-- [ ] **Week 4** - run the LLM systems, failure analysis, demo video, write-up
-- [ ] **v2** - multi-agent upgrade (profiler / planner / verifier / critic), measured on this benchmark
+### 6. Run Tests
+
+```bash
+pytest
+```
+
+The project currently includes 113 tests and does not require an API key to run the test suite.
+
+---
+
+## Usage
+
+### 1. Profile a Dataset
+
+Analyze a CSV file and identify potential data-quality issues:
+
+```bash
+python -m datatidy profile data/messy/tips_messy.csv
+```
+
+### 2. Generate a Cleaning Plan
+
+Generate and save a proposed cleaning plan:
+
+```bash
+python -m datatidy plan data/messy/tips_messy.csv --provider groq
+```
+
+### 3. Clean a Dataset
+
+Generate a plan, request user approval, and execute the cleaning operations:
+
+```bash
+python -m datatidy clean data/messy/tips_messy.csv --provider groq
+```
+
+### 4. Apply a Manual Cleaning Plan
+
+Execute a predefined JSON cleaning plan without using an LLM:
+
+```bash
+python -m datatidy apply data/messy/tips_messy.csv examples/plans/tips_plan.json -o cleaned.csv --log change_log.csv
+```
+
+### 5. Launch the Web Application
+
+```bash
+streamlit run app.py
+```
+
+---
+
+## LLM Provider Configuration
+
+DataTidy supports multiple LLM providers through a unified OpenAI-compatible client.
+
+| Provider | Configuration |
+|---|---|
+| Groq | Free tier with rate limits |
+| Gemini | Free tier with rate limits |
+| Ollama | Local model execution |
+| OpenAI | Paid API access |
+
+### Configure Environment Variables
+
+Create a `.env` file using the provided example:
+
+```bash
+cp .env.example .env
+```
+
+For Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Example configuration:
+
+```env
+DATATIDY_PROVIDER=groq
+GROQ_API_KEY=your_api_key_here
+```
+
+Never commit your `.env` file or expose API keys publicly.
+
+### Privacy
+
+The LLM receives a dataset profile containing column statistics and selected sample values rather than the entire CSV file.
+
+For sensitive datasets, Ollama can be used for local model execution.
+
+---
+
+## Web Interface
+
+The Streamlit interface provides an interactive environment for dataset cleaning.
+
+Users can:
+
+- Upload CSV datasets or select sample datasets.
+- Inspect detected data-quality issues.
+- Generate AI-powered cleaning plans.
+- Review and edit proposed operations.
+- Approve and execute cleaning steps.
+- Compare before-and-after dataset metrics.
+- Inspect execution logs.
+- Download cleaned CSV files, change logs, and cleaning plans.
+
+A rule-based cleaning option is also available without requiring an API key.
+
+---
+
+## Evaluation and Benchmark
+
+DataTidy includes a ground-truth evaluation framework designed to measure both cleaning effectiveness and unintended data damage.
+
+### Benchmark Dataset
+
+The benchmark contains 10 public datasets with three random seeds each, producing 30 evaluation cases.
+
+Datasets include:
+
+- Tips
+- Penguins
+- Titanic
+- MPG
+- Planets
+- Health Expenditure
+- Exercise
+- Diamonds
+- Dow Jones
+- Sea Ice
+
+### Simulated Data Corruptions
+
+| Corruption | Type | Example |
+|---|---|---|
+| Numbers stored as text | Recoverable | `$1,234.5`, `12.5%` |
+| Mixed date formats | Recoverable | `2024-03-05`, `05 Mar 2024` |
+| Case and spacing noise | Recoverable | `FEMALE`, ` female` |
+| Duplicate rows | Recoverable | Repeated records |
+| Hidden missing tokens | Lossy | `N/A`, `?`, `-` |
+| Outliers | Lossy | Values multiplied by 10 |
+
+Recoverable corruptions can be restored to their original values. Lossy corruptions destroy information, so their handling is evaluated differently.
+
+### Systems Compared
+
+1. **Do Nothing:** Uses the original messy dataset without cleaning.
+2. **Rule-Based:** Generates a cleaning plan using profiler results without an LLM.
+3. **Single Prompt:** Uses a basic LLM prompt without validation, retries, fallback, or safety ordering.
+4. **DataTidy Agent:** Uses validation, retry, rule-based fallback, and execution-order safeguards.
+
+### Evaluation Metrics
+
+- Cell Accuracy
+- Damage Rate
+- Fix Rate by Corruption Type
+- Duplicate Removal Rate
+- Rows and Columns Lost
+- Missing Cells Filled
+- LLM Reliability
+- Token Usage and Latency
+
+---
+
+## Benchmark Results
+
+The following results represent averages across 30 benchmark cases per system.
+
+| System | Cell Accuracy | Recoverable Fixed | Duplicates Removed | Damage Rate |
+|---|---:|---:|---:|---:|
+| Do Nothing | 53.4% | 0.0% | 0.0% | 0.0% |
+| Rule-Based | 97.8% | 100.0% | 77.2% | 0.0% |
+| Single Prompt | Pending | Pending | Pending | Pending |
+| DataTidy Agent | Pending | Pending | Pending | Pending |
+
+### Key Observations
+
+- The rule-based baseline achieved 97.8% cell accuracy on the current benchmark.
+- All recoverable corruptions were successfully fixed by the rule-based system.
+- Duplicate removal reached 77.2%, limited by exact matching.
+- The system deliberately avoids automatically modifying flagged outliers because they may represent legitimate observations.
+- LLM-based benchmark results are pending.
+
+The rule-based baseline performs particularly well because the injected corruption types overlap with the issues the profiler was designed to detect. Therefore, these results should not be interpreted as proof that rule-based cleaning solves every data-quality problem.
+
+---
+
+## Project Structure
+
+```text
+DataTidy-Agent/
+│
+├── datatidy/
+│   ├── profiler.py
+│   ├── operations.py
+│   ├── schema.py
+│   ├── llm.py
+│   ├── planner.py
+│   ├── executor.py
+│   ├── pipeline.py
+│   ├── io.py
+│   └── __main__.py
+│
+├── eval/
+│   ├── datasets.py
+│   ├── corrupt.py
+│   ├── metrics.py
+│   ├── baselines.py
+│   ├── run_eval.py
+│   ├── report.py
+│   └── results/
+│
+├── tests/
+│
+├── scripts/
+│   ├── download_datasets.py
+│   └── make_messy_samples.py
+│
+├── examples/
+│   └── plans/
+│
+├── docs/
+│
+├── data/
+│
+├── app.py
+├── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
+## Limitations
+
+- LLM-based benchmark results are still pending.
+- Only exact duplicate matching is currently supported.
+- The benchmark corruption types overlap with profiler detection capabilities.
+- The benchmark currently uses 10 datasets and three random seeds.
+- CSV files are currently the only supported input format.
+- Semantic data validation, such as identifying impossible ages or logically inconsistent records, is not currently implemented.
+
+---
+
+## Future Improvements
+
+- Complete the full benchmark evaluation for LLM-based systems.
+- Analyze and compare LLM-generated cleaning plans.
+- Introduce a multi-agent architecture with specialized profiler, planner, critic, and verifier agents.
+- Explore fuzzy duplicate detection.
+- Introduce semantic data validation.
+- Expand support for additional data formats.
+- Improve evaluation across more diverse datasets.
+
+---
 
 ## License
 
-MIT
+This project is licensed under the MIT License.
+
+---
+
+## Author
+
+**Ishraq Sajid**
+
+BS Artificial Intelligence Student | AI/ML Developer
+
+- GitHub: [Ishraq225](https://github.com/Ishraq225)
+- LinkedIn: [Ishraq Sajid](https://www.linkedin.com/in/ishraq-sajid-44b372352/)
+
+---
+
+*DataTidy Agent: Making data cleaning safer, measurable, and more reliable.*
