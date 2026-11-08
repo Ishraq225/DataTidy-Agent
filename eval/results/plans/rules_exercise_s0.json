@@ -1,0 +1,60 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "id",
+    "params": {},
+    "reason": "8 cell(s) use tokens like ['unknown']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "kind",
+    "params": {},
+    "reason": "8 cell(s) use tokens like ['-']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "Unnamed: 0",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "id",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "diet",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "time",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "1 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "id",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "8 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "kind",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "8 missing categorical value(s)"
+  }
+]

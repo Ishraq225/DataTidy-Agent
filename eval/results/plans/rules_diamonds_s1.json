@@ -1,0 +1,66 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "table",
+    "params": {},
+    "reason": "84 cell(s) use tokens like ['-']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "price",
+    "params": {},
+    "reason": "84 cell(s) use tokens like ['unknown']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "table",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "price",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "z",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "color",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "clarity",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "9 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "table",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "84 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "price",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "84 missing numeric value(s); median is robust to skew"
+  }
+]

@@ -1,0 +1,61 @@
+[
+  {
+    "op": "normalise_text",
+    "column": "species",
+    "reason": "case/spacing variants"
+  },
+  {
+    "op": "normalise_text",
+    "column": "island",
+    "reason": "case/spacing variants"
+  },
+  {
+    "op": "normalise_text",
+    "column": "sex",
+    "reason": "consistent casing"
+  },
+  {
+    "op": "drop_duplicates",
+    "reason": "exact repeats; run after normalising (rows differing only by case/symbols) and before filling (same median can make distinct rows identical)"
+  },
+  {
+    "op": "fill_missing",
+    "column": "sex",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "categorical column, mode is the only sensible simple fill"
+  },
+  {
+    "op": "fill_missing",
+    "column": "bill_length_mm",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "2 missing values"
+  },
+  {
+    "op": "fill_missing",
+    "column": "bill_depth_mm",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "2 missing values"
+  },
+  {
+    "op": "fill_missing",
+    "column": "flipper_length_mm",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "2 missing values"
+  },
+  {
+    "op": "fill_missing",
+    "column": "body_mass_g",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "2 missing values"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "op": "parse_dates",
+    "column": "Date",
+    "params": {},
+    "reason": "100% of values look like dates stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "Extent",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "10 duplicate row(s); after normalising, before filling"
+  }
+]

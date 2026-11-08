@@ -1,0 +1,7 @@
+step,op,column,status,rows_before,rows_after,cells_changed,message,reason
+1,strip_symbols,fare,ok,906,906,906,Converted 'fare' to numbers (906 cell(s) changed).,fare carries a currency symbol
+2,standardize_missing,age,ok,906,906,25,Replaced 25 hidden-missing token(s) with real missing values.,'?' is used as a missing token
+3,cast_type,age,ok,906,906,0,Converted 'age' from str to float64.,numbers stored as text
+4,fill_missing,age,ok,906,906,199,Filled 199 missing value(s) in 'age' with median (28.0).,age is skewed
+5,normalise_text,embark_town,ok,906,906,845,Normalised text in 'embark_town' (845 cell(s) changed).,case/spacing variants
+6,drop_duplicates,,ok,906,777,0,Removed 129 duplicate row(s).,"89 fully duplicated rows (run LAST: rows that differ only by case, spacing or symbols become identical after normalising)"

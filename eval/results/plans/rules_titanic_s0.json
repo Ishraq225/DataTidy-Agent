@@ -1,0 +1,76 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "fare",
+    "params": {},
+    "reason": "66 cell(s) use tokens like ['N/A']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "embarked",
+    "params": {},
+    "reason": "66 cell(s) use tokens like ['-']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "sibsp",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "fare",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "embark_town",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "alive",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "10 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "age",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "110 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "fare",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "66 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "embarked",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "68 missing categorical value(s)"
+  },
+  {
+    "op": "fill_missing",
+    "column": "embark_town",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "2 missing categorical value(s)"
+  }
+]

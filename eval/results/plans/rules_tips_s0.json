@@ -1,0 +1,60 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "time",
+    "params": {},
+    "reason": "20 cell(s) use tokens like ['missing']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "size",
+    "params": {},
+    "reason": "20 cell(s) use tokens like ['N/A']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "tip",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "size",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "sex",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "day",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "3 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "time",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "20 missing categorical value(s)"
+  },
+  {
+    "op": "fill_missing",
+    "column": "size",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "20 missing numeric value(s); median is robust to skew"
+  }
+]

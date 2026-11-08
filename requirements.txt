@@ -1,0 +1,7 @@
+pandas>=2.1
+numpy>=1.26
+pydantic>=2.6
+openai>=1.30        # used for Groq, OpenAI, Gemini and Ollama (all OpenAI-compatible)
+streamlit>=1.35     # web UI (app.py)
+matplotlib>=3.8     # benchmark charts
+pytest>=8.0

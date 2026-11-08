@@ -1,0 +1,60 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "Year",
+    "params": {},
+    "reason": "23 cell(s) use tokens like ['unknown']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "Spending_USD",
+    "params": {},
+    "reason": "23 cell(s) use tokens like ['null']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "Year",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "Spending_USD",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "Life_Expectancy",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "Country",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "4 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "Year",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "23 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "Spending_USD",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "23 missing numeric value(s); median is robust to skew"
+  }
+]

@@ -1,0 +1,90 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "bill_depth_mm",
+    "params": {},
+    "reason": "29 cell(s) use tokens like ['missing']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "body_mass_g",
+    "params": {},
+    "reason": "29 cell(s) use tokens like ['missing']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "bill_depth_mm",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "flipper_length_mm",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "body_mass_g",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "island",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "sex",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "5 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "bill_length_mm",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "2 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "bill_depth_mm",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "31 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "flipper_length_mm",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "2 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "body_mass_g",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "31 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "sex",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "12 missing categorical value(s)"
+  }
+]

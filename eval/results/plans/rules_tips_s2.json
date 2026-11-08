@@ -1,0 +1,54 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "sex",
+    "params": {},
+    "reason": "20 cell(s) use tokens like ['-']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "day",
+    "params": {},
+    "reason": "20 cell(s) use tokens like ['null']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "tip",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "smoker",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "time",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "2 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "sex",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "20 missing categorical value(s)"
+  },
+  {
+    "op": "fill_missing",
+    "column": "day",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "20 missing categorical value(s)"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "op": "strip_symbols",
+    "column": "fare",
+    "reason": "fare carries a currency symbol"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "age",
+    "reason": "'?' is used as a missing token"
+  },
+  {
+    "op": "cast_type",
+    "column": "age",
+    "params": {
+      "target": "float"
+    },
+    "reason": "numbers stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "embark_town",
+    "reason": "case/spacing variants"
+  },
+  {
+    "op": "drop_duplicates",
+    "reason": "exact repeats; run after normalising (rows differing only by case/symbols) and before filling (same median can make distinct rows identical)"
+  },
+  {
+    "op": "fill_missing",
+    "column": "age",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "age is skewed"
+  }
+]

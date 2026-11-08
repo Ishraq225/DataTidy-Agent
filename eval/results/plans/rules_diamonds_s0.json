@@ -1,0 +1,66 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "carat",
+    "params": {},
+    "reason": "84 cell(s) use tokens like ['unknown']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "y",
+    "params": {},
+    "reason": "84 cell(s) use tokens like ['?']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "carat",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "y",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "z",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "cut",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "clarity",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "10 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "carat",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "84 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "y",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "84 missing numeric value(s); median is robust to skew"
+  }
+]

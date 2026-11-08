@@ -1,0 +1,3 @@
+system,runs,cell_accuracy,baseline_accuracy,accuracy_gain,damage_rate,fabrication_rate,row_loss_rate,col_loss_rate,dup_removal_rate,recoverable_fix_rate,fix_numeric_text,fix_date_format,fix_case_space,fix_missing_token,fix_outlier,prompt_tokens,completion_tokens,latency_s,failed_steps,n_steps,issues_after,valid_first_try,fallback_rate
+noop,30,0.5344545290219039,0.5344545290219039,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.533333333333333,,0.0
+rules,30,0.9775628875993166,0.5344545290219039,0.44310835857741254,0.0,0.24904382141716383,0.0004068027210884353,0.0,0.7720815197874021,0.9996086369233422,0.9995931972789116,1.0,0.9995205664874676,0.9971708305741176,0.0,0.0,0.0,0.0,0.0,8.666666666666666,3.3,1.0,0.0

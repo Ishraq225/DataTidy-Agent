@@ -1,0 +1,60 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "mass",
+    "params": {},
+    "reason": "42 cell(s) use tokens like ['null']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "distance",
+    "params": {},
+    "reason": "66 cell(s) use tokens like ['null']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "number",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "mass",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "distance",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "method",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "27 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "orbital_period",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "39 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "distance",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "285 missing numeric value(s); median is robust to skew"
+  }
+]

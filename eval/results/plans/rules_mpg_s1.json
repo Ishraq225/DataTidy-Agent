@@ -1,0 +1,62 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "weight",
+    "params": {},
+    "reason": "33 cell(s) use tokens like ['null']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "name",
+    "params": {},
+    "reason": "33 cell(s) use tokens like ['null']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "weight",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "acceleration",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "origin",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "12 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "horsepower",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "6 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "weight",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "33 missing numeric value(s); median is robust to skew"
+  },
+  {
+    "op": "fill_missing",
+    "column": "name",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "33 missing categorical value(s)"
+  }
+]

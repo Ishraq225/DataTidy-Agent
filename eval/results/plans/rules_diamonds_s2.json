@@ -1,0 +1,60 @@
+[
+  {
+    "op": "standardize_missing",
+    "column": "cut",
+    "params": {},
+    "reason": "84 cell(s) use tokens like ['unknown']"
+  },
+  {
+    "op": "standardize_missing",
+    "column": "price",
+    "params": {},
+    "reason": "84 cell(s) use tokens like ['N/A']"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "price",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "strip_symbols",
+    "column": "z",
+    "params": {},
+    "reason": "100% of values look numeric but are stored as text"
+  },
+  {
+    "op": "normalise_text",
+    "column": "color",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "normalise_text",
+    "column": "clarity",
+    "params": {},
+    "reason": "case/spacing variants or stray whitespace detected"
+  },
+  {
+    "op": "drop_duplicates",
+    "column": null,
+    "params": {},
+    "reason": "7 duplicate row(s); after normalising, before filling"
+  },
+  {
+    "op": "fill_missing",
+    "column": "cut",
+    "params": {
+      "strategy": "mode"
+    },
+    "reason": "84 missing categorical value(s)"
+  },
+  {
+    "op": "fill_missing",
+    "column": "price",
+    "params": {
+      "strategy": "median"
+    },
+    "reason": "84 missing numeric value(s); median is robust to skew"
+  }
+]
