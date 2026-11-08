@@ -1,0 +1,22 @@
+step,op,column,status,rows_before,rows_after,cells_changed,message,reason
+<<<<<<< HEAD
+1,standardize_missing,tip,ok,254,254,22,Replaced 22 hidden-missing token(s) with real missing values.,22 cells use tokens like 'N/A' (hidden_missing_tokens)
+2,strip_symbols,total_bill,ok,254,254,254,Converted 'total_bill' to numbers (254 cell(s) changed).,100% of total_bill values look numeric but are stored as text with '$' symbol
+3,cast_type,total_bill,ok,254,254,0,Converted 'total_bill' from float64 to float64.,"After stripping symbols, total_bill should be numeric"
+4,cast_type,tip,ok,254,254,0,Converted 'tip' from str to float64.,"After standardizing missing tokens, tip values are numeric strings and need float type"
+5,normalise_text,sex,ok,254,254,235,Normalised text in 'sex' (235 cell(s) changed).,"30 cells have leading/trailing/double spaces and case variations (whitespace, inconsistent_categories)"
+6,normalise_text,day,ok,254,254,240,Normalised text in 'day' (240 cell(s) changed).,"31 cells have whitespace and case variations (whitespace, inconsistent_categories)"
+7,clip_outliers,size,ok,254,254,9,"Clipped 9 value(s) in 'size' outside [0.5, 4.5] (iqr).",9 values flagged as numeric_outliers beyond 1.5*IQR
+8,fill_missing,tip,ok,254,254,22,Filled 22 missing value(s) in 'tip' with median (2.94).,22 missing values (~8.7% of rows) after standardization; fill with median
+9,drop_duplicates,,ok,254,243,0,Removed 11 duplicate row(s).,11 fully duplicated rows detected
+=======
+1,normalise_text,species,ok,352,352,330,Normalised text in 'species' (330 cell(s) changed).,case/spacing variants
+2,normalise_text,island,ok,352,352,334,Normalised text in 'island' (334 cell(s) changed).,case/spacing variants
+3,normalise_text,sex,ok,352,352,340,Normalised text in 'sex' (340 cell(s) changed).,consistent casing
+4,fill_missing,sex,ok,352,352,12,Filled 12 missing value(s) in 'sex' with mode ('female').,"categorical column, mode is the only sensible simple fill"
+5,fill_missing,bill_length_mm,ok,352,352,2,Filled 2 missing value(s) in 'bill_length_mm' with median (44.5).,2 missing values
+6,fill_missing,bill_depth_mm,ok,352,352,2,Filled 2 missing value(s) in 'bill_depth_mm' with median (17.3).,2 missing values
+7,fill_missing,flipper_length_mm,ok,352,352,2,Filled 2 missing value(s) in 'flipper_length_mm' with median (197.0).,2 missing values
+8,fill_missing,body_mass_g,ok,352,352,2,Filled 2 missing value(s) in 'body_mass_g' with median (4050.0).,2 missing values
+9,drop_duplicates,,ok,352,344,0,Removed 8 duplicate row(s).,"8 fully duplicated rows (run LAST: rows that differ only by case, spacing or symbols become identical after normalising)"
+>>>>>>> 1cd048273e899c9cfef0050d522a8bb3c029c006
